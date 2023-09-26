@@ -106,7 +106,7 @@ if args.configfile:
 if args.probehelp:
     probehelp = args.probehelp
 
-fhelp = open(probehelp, "r")
+fhelp = probehelp.read_text()
 for line in fhelp:
     if line != "\n":
         temp = line.rstrip('\n')
@@ -120,7 +120,7 @@ for line in fhelp:
         if flag == 'valid':
             probehelplist.append([tempp[0], [tempp[1]]])
 
-f = open(probemasterfile, "r")
+f = probemasterfile.read_text()
 for line in f:
     if line != "\n":
         temp = line.rstrip('\n')
