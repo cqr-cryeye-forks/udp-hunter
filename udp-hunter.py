@@ -59,7 +59,7 @@ probedisplaystr = ""
 parser = argparse.ArgumentParser(description='UDP Hunter', epilog='UDP Hunter')
 parser.add_argument("--hosts", help="Provide host names by commas", dest='host', required=False)
 parser.add_argument("--file", help="Provide file input", dest='filename', required=False)
-parser.add_argument("--output", help="Provide output", dest='output', required=False, default='udphunter-output.txt')
+parser.add_argument("--output", help="Provide output", dest='output', required=False)
 parser.add_argument("--verbose", help="Ignore verbose output --verbose=false", dest='verbose', required=False)
 parser.add_argument("--ports", help="Provide port(s)", dest='ports', required=False)
 parser.add_argument("--probes", help="Provide probe(s)", dest='probes', required=False)
@@ -68,8 +68,8 @@ parser.add_argument("--noise", help="Provide noise", dest='noise', required=Fals
 parser.add_argument("--timeout", help="Provide noise", dest='timeout', required=False, type=float, default=0.3)
 parser.add_argument("--lhost4", help="Provide IPv4 of listner interface", dest='lhost4', required=False)
 parser.add_argument("--lhost6", help="Provide IPv6 of listner interface", dest='lhost6', required=False)
-parser.add_argument("--configfile", help="Provide port(s)", dest='configfile', required=False, default='udp.txt')
-parser.add_argument("--probehelp", help="Provide port(s)", dest='probehelp', required=False, default='udphelp.txt')
+parser.add_argument("--configfile", help="Provide port(s)", dest='configfile', required=False)
+parser.add_argument("--probehelp", help="Provide port(s)", dest='probehelp', required=False)
 args = parser.parse_args()  # print(args.accumulate(args.integers))
 
 if (args.lhost4 is None) or (args.lhost6 is None):
