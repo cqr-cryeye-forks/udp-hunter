@@ -7,7 +7,7 @@ import socket
 import sys
 import threading
 from time import gmtime, strftime
-from path import UDP_PATH, UDP_HELP_PATH
+from paths import UDP_PATH, UDP_HELP_PATH
 import ifaddr
 from netaddr import IPNetwork
 
