@@ -1,22 +1,15 @@
-import sys
-import socket
-import os
-import struct
-import threading
-import base64
-import binascii
-import netaddr
-import select
-import json
 import argparse
-import ifaddr
+import binascii
+import json
+import os
 import pathlib
+import socket
+import sys
+import threading
+from time import gmtime, strftime
 
-from colorama import Fore, Back, Style
-from time import gmtime, strftime, sleep
-from datetime import datetime
-from netaddr import IPNetwork, IPAddress
-from ctypes import *
+import ifaddr
+from netaddr import IPNetwork
 
 localips = []
 
@@ -63,46 +56,6 @@ timeout = 1.0
 probedisplaylist = []
 probedisplaystr = ""
 
-fd = open(probemasterfile, "r")
-for line in fd:
-    if line != "\n":
-        temp = line.rstrip('\n')
-        if temp[:1] != "#":
-            tempp = [x.strip() for x in temp.split(',')]
-            probedisplaylist.append(tempp[1])
-probedisplaystr = ", ".join(probedisplaylist)
-
-print(banner)
-print("""
-ooooo     ooo oooooooooo.   ooooooooo.        ooooo   ooooo                             .                      
-`888'     `8' `888'   `Y8b  `888   `Y88.      `888'   `888'                           .o8                      
- 888       8   888      888  888   .d88'       888     888  oooo  oooo  ooo. .oo.   .o888oo  .ooooo.  oooo d8b 
- 888       8   888      888  888ooo88P'        888ooooo888  `888  `888  `888P"Y88b    888   d88' `88b `888""8P 
- 888       8   888      888  888               888     888   888   888   888   888    888   888ooo888  888     
- `88.    .8'   888     d88'  888               888     888   888   888   888   888    888 . 888    .o  888     
-   `YbodP'    o888bood8P'   o888o             o888o   o888o  `V88V"V8P' o888o o888o   "888" `Y8bod8P' d888b    
-....................NotSoSecure (c) 2020 | Developed by Savan Gadhiya - www.gadhiyasavan.com...................
-           
-Usage: python udp.py --file=inputfile.txt --output=outputfile.txt [optional arguments] 
-Usage: python udp.py --file=inputfile.txt --output=outputfile.txt [--probes=NTPRequest,SNMPv3GetReques] [--ports=123,161,53] [--retries=3] [--noise=true] [--verbose=false] [--timeout=1.0] [--configfile]
---host 		 - Single Host  - Required
---file 		 - File of ips  - Required
---output 	 - Output file - Required
---probes 	 - Name of probe or 'all' (default: all probes) (Optional)
-""")
-print("Probe list       - " + probedisplaystr)
-print("""
---ports 	 - List of ports or 'all' (default: all ports) (Optional)
---retries 	 - Number of packets to send to each host.  Default 2 (Optional)
---noise 	 - To filter output from non-listed IPs  (Optional)
---verbose	 - verbosity,  will show sniffer output also --- please keep this a true, by default this is true. This will help us to analyze output.
---timeout 	 - Timeout 1.0, 2.0 in minutes (Optional)
---lhost6         - Provide IPv6 of listner interface
---lhost4         - Provide IPv4 of listner interface
---configfile     - Configuration file location - default is 'udp.txt' in same directory
---probehelp      - Help file location - default is 'udphelp.txt' in same directory
-""")
-
 parser = argparse.ArgumentParser(description='UDP Hunter', epilog='UDP Hunter')
 parser.add_argument("--hosts", help="Provide host names by commas", dest='host', required=False)
 parser.add_argument("--file", help="Provide file input", dest='filename', required=False)
@@ -119,24 +72,24 @@ parser.add_argument("--configfile", help="Provide port(s)", dest='configfile', r
 parser.add_argument("--probehelp", help="Provide port(s)", dest='probehelp', required=False, default='udphelp.txt')
 args = parser.parse_args()  # print(args.accumulate(args.integers))
 
-if (args.lhost4 == None) or (args.lhost6 == None):
+if (args.lhost4 is None) or (args.lhost6 is None):
     if os.name == "posix":
-        if args.lhost4 == None:
+        if args.lhost4 is None:
             hostipv4 = ""
         else:
             hostipv4 = args.lhost4
-        if args.lhost6 == None:
+        if args.lhost6 is None:
             hostipv6 = "::"
         else:
             hostipv6 = args.lhost6
     else:
         print(getlocaladdress())
         inputval = input("Select a network adapter to set IPv4 and IPv6 listening hosts:\n")
-        if args.lhost6 == None:
+        if args.lhost6 is None:
             hostipv6 = localips[int(inputval) - 1][1]
         else:
             hostipv6 = args.lhost6
-        if args.lhost4 == None:
+        if args.lhost4 is None:
             hostipv4 = localips[int(inputval) - 1][2]
         else:
             hostipv4 = args.lhost4
@@ -275,11 +228,6 @@ target = target_v4
 sock_add_family = socket.AF_INET
 sock_ip_proto = socket.IPPROTO_IP
 
-# f = open(outputfilename, 'a+')
-# f.write("\n\n##### File was updated at " + strftime("%Y-%m-%d %H:%M:%S GMT", gmtime()) + " #####\n\n" + banner)
-# f.truncate()
-# f.close()
-
 
 def udp_sender(target, pack):
     for ip in target:
@@ -294,20 +242,12 @@ def udp_sender(target, pack):
                 pass
 
 
-print("\nPlease note that output file " + outputfilestr + " will be appended ... \n")
-
-
 def getsniffer(host):
     outputfilestr = ""
     sniffer = socket.socket(sock_add_family, socket.SOCK_RAW, socket.IPPROTO_UDP)
     sniffer.bind((host, 0))
     sniffer.setsockopt(sock_ip_proto, socket.IP_HDRINCL, 1)
     sniffer.settimeout(int(float(timeout) * 60))  ### Set timeout - 60 seconds
-
-    # f = open(outputfilename, 'a+')  # a+
-    # f.write("Scanning following IPs: \n\n" + str(target) + "\n\n")
-    # f.truncate()
-    # f.close()
 
     if os.name == "nt":
         sniffer.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)  ## might be not necessary in this case
@@ -317,13 +257,12 @@ def getsniffer(host):
     printflag = "false"
     final_result = []
 
-
     try:
         while True:
             raw_buffer = sniffer.recvfrom(65565)
             snif = binascii.hexlify(raw_buffer[0])
             source_ip = raw_buffer[1][0]
-            destination_ip = ""
+
             if "." in source_ip:
                 port = str(int(snif[40:44], 16))  # FOR IPv4
             elif ":" in source_ip:
@@ -332,6 +271,7 @@ def getsniffer(host):
             if snif != "" and printflag == "false":
                 print("%-40s %-10s %-5s %s" % ("IP", "PORT(UDP)", "STAT", "SERVICE"))
                 printflag = "true"
+
             printservice = ""
             for i in range(len(probemaster)):
                 if int(probemaster[i][0]) == int(port):
@@ -341,7 +281,7 @@ def getsniffer(host):
                         printservice += probemaster[i][1][ii][0]
             if printservice == "":
                 printservice = "Unknown Service"
-            noisyport = "true"
+
             pack_port = []
             for i in range(len(pack)):
                 pack_port.append(str(pack[i][0]))
@@ -366,8 +306,6 @@ def getsniffer(host):
                     outputfilestr = "Host: " + str(source_ip) + "; PORT: " + str(
                         port) + ";" + ' STATE: open' + "; UDP Service:" + str(printservice) + " \n\n"
 
-
-
     except socket.timeout:
         if float(timeout) >= 1.0:
             print("\nINFO: Sniffer timeout was set to " + str(timeout) + " minutes")
@@ -389,17 +327,6 @@ def getsniffer(host):
             file_path = root_path.joinpath(args.output)
             file_path.write_text(json.dumps(final_result))
 
-            # f = open(outputfilename, 'a+')
-            # json.dump(final_result, f)
-            # # f.write(outputfilestr)
-            # # f.truncate()
-            # # f.close()
-
-        # for phdata in probehelplist:
-        #     for odata in output:
-        #         if odata[1] == phdata[0]:
-        #             helpdata.append(str(odata[2]) + "(port " + str(odata[1]) + "):" + str(phdata[1]))
-
 
 try:
     if len(target) == 0:
@@ -415,18 +342,4 @@ finally:
         sock_add_family = socket.AF_INET6
         sock_ip_proto = socket.IPPROTO_IPV6
         getsniffer(hostipv6)
-    # f = open(outputfilename, 'a+')
-    # helpdata = list(dict.fromkeys(helpdata))
-    # if len(helpdata) != 0:
-    #     f.write("\n\nFew known tools/script/commands/references for identified services.......\n" + "\n".join(helpdata))
-    # failedtarget = list(dict.fromkeys(failedtarget))
-    # if len(failedtarget) != 0:
-    #     f.write("\n\nFailed Target(s): \n" + "\n".join(failedtarget))
-    # f.write("\n\n##### File updation ended at " + strftime("%Y-%m-%d %H:%M:%S GMT", gmtime()) + " ##### \n\n")
-    # f.truncate()
-    # f.close()
-    # if len(helpdata) != 0:
-    #     print("\n\nFew known tools/script/commands/references for identified services.......\n" + "\n".join(helpdata))
-    # if len(failedtarget) != 0:
-    #     print("\nFailed target list will be appended to the output file...")
-    # print("\nYour feedbacks are welcome...\n\nEnd of UDP Hunter at " + strftime("%Y-%m-%d %H:%M:%S GMT", gmtime()))
+
