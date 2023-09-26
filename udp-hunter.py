@@ -49,7 +49,7 @@ outputfilestr = ""
 outputfilename = ""
 probemasterfile = UDP_PATH
 probehelp = UDP_HELP_PATH
-probehelplist = []
+# probehelplist = []
 probemaster = []
 noise = "False"
 timeout = 1.0
@@ -106,19 +106,19 @@ if args.configfile:
 if args.probehelp:
     probehelp = args.probehelp
 
-fhelp = probehelp.read_text()
-for line in fhelp:
-    if line != "\n":
-        temp = line.rstrip('\n')
-        tempp = [x.strip() for x in temp.split(',')]
-        flag = 'valid'
-        for i in range(len(probehelplist)):
-            if tempp[0] == probehelplist[i][0]:
-                flag = 'invalid'
-                probehelplist[i][1].append(tempp[1])
-                break
-        if flag == 'valid':
-            probehelplist.append([tempp[0], [tempp[1]]])
+# fhelp = probehelp.read_text()
+# for line in fhelp:
+#     if line != "\n":
+#         temp = line.rstrip('\n')
+#         tempp = [x.strip() for x in temp.split(',')]
+#         flag = 'valid'
+#         for i in range(len(probehelplist)):
+#             if tempp[0] == probehelplist[i][0]:
+#                 flag = 'invalid'
+#                 probehelplist[i][1].append(tempp[1])
+#                 break
+#         if flag == 'valid':
+#             probehelplist.append([tempp[0], [tempp[1]]])
 
 f = probemasterfile.read_text()
 for line in f:
