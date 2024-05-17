@@ -1,5 +1,5 @@
-netaddr
-colorama
-argparse
-ifaddr
-datetime
+netaddr==1.2.1
+colorama==0.4.6
+argparse==1.4.0
+ifaddr==0.2.0
+datetime==5.5
