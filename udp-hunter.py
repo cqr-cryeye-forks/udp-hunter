@@ -4,22 +4,23 @@ import json
 import os
 import pathlib
 import socket
-import sys
 import threading
 from time import gmtime, strftime
 from paths import UDP_PATH, UDP_HELP_PATH
 import ifaddr
 from netaddr import IPNetwork
 
-localips = []
+
+# --file IP_V4Targets.txt --output data.json
+# --host 8.8.8.8 --output data.json
 
 
 def getlocaladdress():
     adapters = ifaddr.get_adapters()
     i = 1
     for adapter in adapters:
-        localips.append((str(adapter.nice_name), str(adapter.ips[0].ip[0]), str(adapter.ips[1].ip)))
-    for localip in localips:
+        local_ips.append((str(adapter.nice_name), str(adapter.ips[0].ip[0]), str(adapter.ips[1].ip)))
+    for localip in local_ips:
         print(i, localip[0], ": IPv6", localip[1], ": IPv4", localip[2])
         i += 1
 
@@ -29,32 +30,33 @@ def gethostdata(name):
         print(socket.gethostbyname(name))
     except socket.gaierror as err:
         print("Cannot resolve hostname: ", name, err)
-    sys.exit()
+    exit()
 
 
+local_ips = []
 banner = "UDP Hunter v0.1beta - Updated on 26 February 2020"
-hostipv4 = ""
-hostipv6 = "::"
+host_ip_v4 = ""
+host_ip_v6 = "::"
 pack = []
 port_list = []
 probe_list = []
-argerror = ""
+arg_error = ""
 target = []
-failedtarget = []
+failed_target = []
 filename = ""
-helpdata = []
+help_data = []
 output = []
 output_tuple = []
-outputfilestr = ""
-outputfilename = ""
-probemasterfile = UDP_PATH
-probehelp = UDP_HELP_PATH
-# probehelplist = []
-probemaster = []
+output_file_str = ""
+output_filename = ""
+probe_master_file = UDP_PATH
+probe_help = UDP_HELP_PATH
+probe_help_list = []
+probe_master = []
 noise = "False"
 timeout = 1.0
-probedisplaylist = []
-probedisplaystr = ""
+probe_display_list = []
+probe_display_str = ""
 
 parser = argparse.ArgumentParser(description='UDP Hunter', epilog='UDP Hunter')
 parser.add_argument("--hosts", help="Provide host names by commas", dest='host', required=False)
@@ -75,36 +77,36 @@ args = parser.parse_args()  # print(args.accumulate(args.integers))
 if (args.lhost4 is None) or (args.lhost6 is None):
     if os.name == "posix":
         if args.lhost4 is None:
-            hostipv4 = ""
+            host_ip_v4 = ""
         else:
-            hostipv4 = args.lhost4
+            host_ip_v4 = args.lhost4
         if args.lhost6 is None:
-            hostipv6 = "::"
+            host_ip_v6 = "::"
         else:
-            hostipv6 = args.lhost6
+            host_ip_v6 = args.lhost6
     else:
         print(getlocaladdress())
-        inputval = input("Select a network adapter to set IPv4 and IPv6 listening hosts:\n")
+        input_val = input("Select a network adapter to set IPv4 and IPv6 listening hosts:\n")
         if args.lhost6 is None:
-            hostipv6 = localips[int(inputval) - 1][1]
+            host_ip_v6 = local_ips[int(input_val) - 1][1]
         else:
-            hostipv6 = args.lhost6
+            host_ip_v6 = args.lhost6
         if args.lhost4 is None:
-            hostipv4 = localips[int(inputval) - 1][2]
+            host_ip_v4 = local_ips[int(input_val) - 1][2]
         else:
-            hostipv4 = args.lhost4
+            host_ip_v4 = args.lhost4
 else:
-    hostipv4 = args.lhost4
-    hostipv6 = args.lhost6
+    host_ip_v4 = args.lhost4
+    host_ip_v6 = args.lhost6
 
-if hostipv4 == "":
-    print("Listening IPs were set to IPv6 - ", hostipv6, " and IPv4 - Default", hostipv4)
+if host_ip_v4 == "":
+    print("Listening IPs were set to IPv6 - ", host_ip_v6, " and IPv4 - Default", host_ip_v4)
 else:
-    print("Listening IPs were set to IPv6 - ", hostipv6, " and IPv4 - ", hostipv4)
+    print("Listening IPs were set to IPv6 - ", host_ip_v6, " and IPv4 - ", host_ip_v4)
 if args.configfile:
-    probemasterfile = args.configfile
+    probe_master_file = args.configfile
 if args.probehelp:
-    probehelp = args.probehelp
+    probe_help = args.probehelp
 
 # fhelp = probehelp.read_text()
 # for line in fhelp:
@@ -120,24 +122,24 @@ if args.probehelp:
 #         if flag == 'valid':
 #             probehelplist.append([tempp[0], [tempp[1]]])
 
-f = probemasterfile.read_text()
-for line in f:
-    if line != "\n":
-        temp = line.rstrip('\n')
-        if temp[:1] != "#":
-            tempp = [x.strip() for x in temp.split(',')]
-            flag = 'valid'
-            for i in range(len(probemaster)):
-                if int(probemaster[i][0]) == int(tempp[0]):
-                    probemaster[i][1].append((tempp[1], tempp[2]))
-                    flag = 'invalid'
-                    break
-            if flag == 'valid':
-                probemaster.append((int(tempp[0]), [(tempp[1], tempp[2])]))
+# f = probemasterfile.read_text()
+# for line in f:
+#     if line != "\n":
+#         temp = line.rstrip('\n')
+#         if temp[:1] != "#":
+#             tempp = [x.strip() for x in temp.split(',')]
+#             flag = 'valid'
+#             for i in range(len(probemaster)):
+#                 if int(probemaster[i][0]) == int(tempp[0]):
+#                     probemaster[i][1].append((tempp[1], tempp[2]))
+#                     flag = 'invalid'
+#                     break
+#             if flag == 'valid':
+#                 probemaster.append((int(tempp[0]), [(tempp[1], tempp[2])]))
 
 if args.host == args.filename:
     print('--host or --filename required')
-    sys.exit()
+    exit()
 
 if args.host:
     hosts = args.host
@@ -160,39 +162,39 @@ if args.probes:
     probe_list = args.probes
     probe_list = probe_list.split(",")
 if args.output:
-    outputfilename = args.output
+    output_filename = args.output
 if args.retries:
     retries = args.retries
-if args.noise != None:
+if args.noise is not None:
     noise = args.noise
-if args.timeout != "True" and args.timeout != None:
+if args.timeout != "True" and args.timeout is not None:
     timeout = args.timeout
 
 # Create a pack/list which will include the probes and ports to be scanned with probe, servicename, port number etc.
 if args.ports or args.probes:
-    for i1 in range(len(probemaster)):
+    for i1 in range(len(probe_master)):
         for ports in port_list:
-            if probemaster[i1][0] == int(ports):
-                for i2 in range(len(probemaster[i1][1])):
-                    pack.append((probemaster[i1][0], probemaster[i1][1][i2][0], probemaster[i1][1][i2][1],
-                                 binascii.unhexlify(probemaster[i1][1][i2][1])))
+            if probe_master[i1][0] == int(ports):
+                for i2 in range(len(probe_master[i1][1])):
+                    pack.append((probe_master[i1][0], probe_master[i1][1][i2][0], probe_master[i1][1][i2][1],
+                                 binascii.unhexlify(probe_master[i1][1][i2][1])))
         # print probe_list,port_list
         for probes in probe_list:
             if 1 == 1:
-                for i2 in range(len(probemaster[i1][1])):
-                    if probemaster[i1][1][i2][0] == probes:
-                        pack.append((probemaster[i1][0], probemaster[i1][1][i2][0], probemaster[i1][1][i2][1],
-                                     binascii.unhexlify(probemaster[i1][1][i2][1])))
+                for i2 in range(len(probe_master[i1][1])):
+                    if probe_master[i1][1][i2][0] == probes:
+                        pack.append((probe_master[i1][0], probe_master[i1][1][i2][0], probe_master[i1][1][i2][1],
+                                     binascii.unhexlify(probe_master[i1][1][i2][1])))
 else:
-    for i1 in range(len(probemaster)):
-        for i2 in range(len(probemaster[i1][1])):
-            pack.append((probemaster[i1][0], probemaster[i1][1][i2][0], probemaster[i1][1][i2][1],
-                         binascii.unhexlify(probemaster[i1][1][i2][1])))
+    for i1 in range(len(probe_master)):
+        for i2 in range(len(probe_master[i1][1])):
+            pack.append((probe_master[i1][0], probe_master[i1][1][i2][0], probe_master[i1][1][i2][1],
+                         binascii.unhexlify(probe_master[i1][1][i2][1])))
 # END OF
 # Create a pack/list which will include the probes and ports to be scanned with probe, servicename, port number etc.
 
 print("\nStarting UDP Hunter at " + strftime("%Y-%m-%d %H:%M:%S GMT", gmtime()))
-print("\nCommand with arguments  : " + " ".join(sys.argv))
+# print("\nCommand with arguments  : " + " ".join(sys.argv))
 print("-----------------------------------------------------------------------------")
 if len(filename) > 0:
     print("Input File for Ips      : " + filename)
@@ -202,8 +204,8 @@ elif len(probe_list) > 0:
     print("Probe List              : " + str(probe_list))
 else:
     print("Probe List              : ALL")
-printips = (str(", ".join(target))[:75] + '..') if len(str(", ".join(target))) > 75 else str(", ".join(target))
-print("Scanning report for IPs : " + printips)
+print_ips = (str(", ".join(target))[:75] + '..') if len(str(", ".join(target))) > 75 else str(", ".join(target))
+print("Scanning report for IPs : " + print_ips)
 probelist = ""
 
 for probe in pack:
@@ -214,14 +216,14 @@ print("-------------------------------------------------------------------------
 target_v4 = []
 target_v6 = []
 
-for hostdata in target:
-    if "." in hostdata:
+for host_data in target:
+    if "." in host_data:
         try:
-            target_v4.append(socket.gethostbyname(hostdata))
+            target_v4.append(socket.gethostbyname(host_data))
         except socket.gaierror as err:
-            failedtarget.append(str(hostdata) + " : Could not resolve hostname: " + str(err))
+            failed_target.append(str(host_data) + " : Could not resolve hostname: " + str(err))
     else:
-        target_v6.append(hostdata)
+        target_v6.append(host_data)
 
 target = target_v4
 
@@ -238,12 +240,12 @@ def udp_sender(target, pack):
                 for retry in range(retries):
                     sender.sendto(probe[3], (ip, probe[0]))  # sender.sendto(probe[2],(ip,port))
             except Exception as e:
-                failedtarget.append(str(ip) + " : Could not send probe: " + str(e))
+                failed_target.append(str(ip) + " : Could not send probe: " + str(e))
                 pass
 
 
 def getsniffer(host):
-    outputfilestr = ""
+    output_file_str = ""
     sniffer = socket.socket(sock_add_family, socket.SOCK_RAW, socket.IPPROTO_UDP)
     sniffer.bind((host, 0))
     sniffer.setsockopt(sock_ip_proto, socket.IP_HDRINCL, 1)
@@ -254,7 +256,7 @@ def getsniffer(host):
 
     t = threading.Thread(target=udp_sender, args=(target, pack))
     t.start()
-    printflag = "false"
+    print_flag = "false"
     final_result = []
 
     try:
@@ -268,19 +270,19 @@ def getsniffer(host):
             elif ":" in source_ip:
                 port = str(int(snif[0:4], 16))  # FOR IPv6
 
-            if snif != "" and printflag == "false":
+            if snif != "" and print_flag == "false":
                 print("%-40s %-10s %-5s %s" % ("IP", "PORT(UDP)", "STAT", "SERVICE"))
-                printflag = "true"
+                print_flag = "true"
 
-            printservice = ""
-            for i in range(len(probemaster)):
-                if int(probemaster[i][0]) == int(port):
-                    for ii in range(len(probemaster[i][1])):
-                        if printservice != "":
-                            printservice += "/"
-                        printservice += probemaster[i][1][ii][0]
-            if printservice == "":
-                printservice = "Unknown Service"
+            print_service = ""
+            for i in range(len(probe_master)):
+                if int(probe_master[i][0]) == int(port):
+                    for ii in range(len(probe_master[i][1])):
+                        if print_service != "":
+                            print_service += "/"
+                        print_service += probe_master[i][1][ii][0]
+            if print_service == "":
+                print_service = "Unknown Service"
 
             pack_port = []
             for i in range(len(pack)):
@@ -290,21 +292,21 @@ def getsniffer(host):
             if (((port in pack_port) and (str(source_ip) in target) and (noise in ["False", "false"])) or (
                     noise in ["True", "true"])) and ((str(source_ip), port) not in output_tuple):
                 if str(source_ip) != "::1":
-                    print("%-40s %-10s open  %s" % (str(source_ip), port, printservice))
-                output.append([str(source_ip), port, printservice, snif])
+                    print("%-40s %-10s open  %s" % (str(source_ip), port, print_service))
+                output.append([str(source_ip), port, print_service, snif])
                 output_tuple.append((str(source_ip), port))
 
                 final_result.append({"Host": str(source_ip),
                                      "Port": str(port),
                                      "State": "open",
-                                     "UDP Service": str(printservice)})
+                                     "UDP Service": str(print_service)})
 
                 if args.verbose not in ["false", "False"]:
-                    outputfilestr = "Host: " + str(source_ip) + "; PORT: " + str(
-                        port) + ";" + ' STATE: open' + "; UDP Service:" + str(printservice) + "; " + str(snif) + " \n\n"
+                    output_file_str = "Host: " + str(source_ip) + "; PORT: " + str(
+                        port) + ";" + ' STATE: open' + "; UDP Service:" + str(print_service) + "; " + str(snif) + " \n\n"
                 else:
-                    outputfilestr = "Host: " + str(source_ip) + "; PORT: " + str(
-                        port) + ";" + ' STATE: open' + "; UDP Service:" + str(printservice) + " \n\n"
+                    output_file_str = "Host: " + str(source_ip) + "; PORT: " + str(
+                        port) + ";" + ' STATE: open' + "; UDP Service:" + str(print_service) + " \n\n"
 
     except socket.timeout:
         if float(timeout) >= 1.0:
@@ -332,7 +334,7 @@ try:
     if len(target) == 0:
         pass
     else:
-        getsniffer(hostipv4)
+        getsniffer(host_ip_v4)
 except Exception as e:
     print("Error occured: 30001, More information: " + str(e))
 finally:
@@ -341,5 +343,5 @@ finally:
         target = target_v6
         sock_add_family = socket.AF_INET6
         sock_ip_proto = socket.IPPROTO_IPV6
-        getsniffer(hostipv6)
+        getsniffer(host_ip_v6)
 
